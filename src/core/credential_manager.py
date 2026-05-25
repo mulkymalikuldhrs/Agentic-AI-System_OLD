@@ -37,12 +37,18 @@ class SecureCredentialManager:
     def _initialize_encryption(self):
         """Initialize encryption system"""
         if not self.master_password:
-            # Use default master password (should be changed in production)
-            self.master_password = "agentic_ai_indonesia_secure_2024"
+            # Read master password from environment; fail if not set
+            self.master_password = os.getenv("AGENTIC_AI_MASTER_PASSWORD")
+            if not self.master_password:
+                raise ValueError(
+                    "AGENTIC_AI_MASTER_PASSWORD environment variable is required. "
+                    "Set it before running the application."
+                )
         
         # Derive encryption key from master password
         password = self.master_password.encode()
-        salt = b'agentic_ai_salt_indonesia'  # In production, use random salt per user
+        # Use a salt derived from the master password hash for per-user uniqueness
+        salt = hashlib.sha256(b"agentic_ai_salt_" + password).digest()
         
         kdf = PBKDF2HMAC(
             algorithm=hashes.SHA256(),
